@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express = require('express');
 const { Telegraf, Markup } = require('telegraf');
 const { message } = require("telegraf/filters");
@@ -6,7 +7,6 @@ const process = require('process');
 const ngrok = require("@ngrok/ngrok");
 const bodyParser = require('body-parser');
 const axios = require('axios'); // Для отправки запросов к Telegram API
-require('dotenv').config()
 
 const HOOK_PATH = process.env.HOOK_PATH || "hook";
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${process.env.BOT_TOKEN}`; // API URL Telegram
