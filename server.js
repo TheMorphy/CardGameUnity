@@ -12,6 +12,8 @@ const cors = require('cors');
 const HOOK_PATH = process.env.HOOK_PATH || "hook";
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${process.env.BOT_TOKEN}`; // API URL Telegram
 
+let currentNgrokUrl = ''; // Переменная для хранения URL ngrok
+
 const rules = `
 Each player is dealt 26 cards.
 
@@ -76,6 +78,9 @@ process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
 // Маршрут для создания инвойса
 app.post('/createInvoice', async (req, res) => {
+    console.log(`Метод запроса: ${req.method}`); // Лог метода запроса
+    console.log(`Тело запроса: ${JSON.stringify(req.body)}`); // Лог тела запроса
+
     const { chat_id, title, description, payload, amount } = req.body;
 
     const invoice = {
@@ -84,7 +89,7 @@ app.post('/createInvoice', async (req, res) => {
         description: description,
         payload: payload,
         provider_token: "", // Пустая строка для Telegram Stars
-        currency: "XTR", // Валюта для Telegram Stars
+        currency: "XTR",
         prices: [
             { label: title, amount: amount } // amount в минимальных единицах (звезды)
         ]
@@ -92,19 +97,17 @@ app.post('/createInvoice', async (req, res) => {
 
     try {
         const response = await axios.post(`${TELEGRAM_API_URL}/sendInvoice`, invoice);
+        console.log('Ответ от Telegram API:', response.data); // Лог ответа от API Telegram
         res.json(response.data); // Возвращаем ответ
     } catch (error) {
-        if (error.response) {
-            console.error('Error creating invoice:', error.response.data);
-            res.status(500).json({ error: error.response.data });
-        } else if (error.request) {
-            console.error('No response received:', error.request);
-            res.status(500).json({ error: 'No response from Telegram API' });
-        } else {
-            console.error('Error in request setup:', error.message);
-            res.status(500).json({ error: error.message });
-        }
+        console.error('Ошибка при создании инвойса:', error.response ? error.response.data : error.message);
+        res.status(500).json({ error: error.response ? error.response.data : 'Unknown error' });
     }
+});
+
+// Маршрут для получения текущего URL ngrok
+app.get('/currentNgrokUrl', (req, res) => {
+    res.json({ url: currentNgrokUrl });
 });
 
 // Обработка webhook для платежей
@@ -143,7 +146,8 @@ if (process.env.NODE_ENV === 'development') {
     const setupNgrok = async () => {
         await ngrok.authtoken(process.env.NGROK_AUTHTOKEN);
         const url = await ngrok.connect({ addr: process.env.PORT });
-        console.log('url', url);
+        currentNgrokUrl = url; // Сохраняем текущий URL ngrok
+        console.log('ngrok URL:', url);
         bot.telegram.setWebhook(`${url}/${HOOK_PATH}`, {
             secret_token: process.env.SECRET_TOKEN,
             allowed_updates: ['message', 'pre_checkout_query', 'successful_payment']
