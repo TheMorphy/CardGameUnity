@@ -78,8 +78,17 @@ app.post('/createInvoice', async (req, res) => {
         const response = await axios.post(`${TELEGRAM_API_URL}/sendInvoice`, invoice);
         res.json(response.data); // Возвращаем ответ
     } catch (error) {
-        console.error('Error creating invoice:', error.response ? error.response.data : error.message);
-        res.status(500).json({ error: 'Failed to create invoice' });
+        // Логируем детальную ошибку
+        if (error.response) {
+            console.error('Error creating invoice:', error.response.data); // Если сервер ответил с ошибкой
+            res.status(500).json({ error: error.response.data });
+        } else if (error.request) {
+            console.error('No response received:', error.request); // Если не было ответа от сервера
+            res.status(500).json({ error: 'No response received from Telegram API' });
+        } else {
+            console.error('Error in request setup:', error.message); // Ошибка на стороне клиента
+            res.status(500).json({ error: error.message });
+        }
     }
 });
 
