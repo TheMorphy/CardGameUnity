@@ -92,6 +92,7 @@ app.post('/createInvoice', async (req, res) => {
             res.status(500).json({ error: error.message });
         }
     }
+});
 
 // Обработка webhook для платежей
 app.post('/paymentWebhook', async (req, res) => {
