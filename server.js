@@ -1,4 +1,4 @@
-require('dotenv').config()
+require('dotenv').config();
 const express = require('express');
 const { Telegraf, Markup } = require('telegraf');
 const { message } = require("telegraf/filters");
@@ -52,14 +52,20 @@ app.use((req, res, next) => {
     next();
 });
 
+// Обработка preflight запросов для CORS
+app.options('*', (req, res) => {
+    res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.sendStatus(200); // Успешный ответ для preflight запросов
+});
 
+// Настройка CORS
 const corsOptions = {
     origin: '*', 
-    methods: ['GET', 'POST'], 
+    methods: ['GET', 'POST', 'OPTIONS'], 
     allowedHeaders: ['Content-Type', 'Authorization']
 };
 app.use(cors(corsOptions));
-
 
 const bot = new Telegraf(process.env.BOT_TOKEN, {
     telegram: { webhookReply: true },
