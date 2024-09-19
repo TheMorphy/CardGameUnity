@@ -47,12 +47,20 @@ app.use(express.static(path.join(__dirname, '/'), {
 }));
 
 app.use((req, res, next) => {
+    if (req.headers['x-forwarded-proto'] !== 'https') {
+        return res.redirect(301, `https://${req.headers.host}${req.url}`);
+    }
+    next();
+});
+
+app.use((req, res, next) => {
     const secret = req.get('X-Telegram-Bot-Api-Secret-Token');
     if (process.env.SECRET_TOKEN !== secret) {
         return res.sendStatus(301);
     }
     next();
 });
+
 
 // Обработка preflight запросов для CORS
 app.options('*', (req, res) => {
