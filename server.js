@@ -7,6 +7,7 @@ const process = require('process');
 const ngrok = require("@ngrok/ngrok");
 const bodyParser = require('body-parser');
 const axios = require('axios'); // Для отправки запросов к Telegram API
+const cors = require('cors');
 
 const HOOK_PATH = process.env.HOOK_PATH || "hook";
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${process.env.BOT_TOKEN}`; // API URL Telegram
@@ -51,6 +52,8 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use(cors());
+
 const bot = new Telegraf(process.env.BOT_TOKEN, {
     telegram: { webhookReply: true },
 });
@@ -78,19 +81,17 @@ app.post('/createInvoice', async (req, res) => {
         const response = await axios.post(`${TELEGRAM_API_URL}/sendInvoice`, invoice);
         res.json(response.data); // Возвращаем ответ
     } catch (error) {
-        // Логируем детальную ошибку
         if (error.response) {
-            console.error('Error creating invoice:', error.response.data); // Если сервер ответил с ошибкой
+            console.error('Error creating invoice:', error.response.data);
             res.status(500).json({ error: error.response.data });
         } else if (error.request) {
-            console.error('No response received:', error.request); // Если не было ответа от сервера
-            res.status(500).json({ error: 'No response received from Telegram API' });
+            console.error('No response received:', error.request);
+            res.status(500).json({ error: 'No response from Telegram API' });
         } else {
-            console.error('Error in request setup:', error.message); // Ошибка на стороне клиента
+            console.error('Error in request setup:', error.message);
             res.status(500).json({ error: error.message });
         }
     }
-});
 
 // Обработка webhook для платежей
 app.post('/paymentWebhook', async (req, res) => {
