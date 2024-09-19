@@ -52,7 +52,14 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(cors());
+
+const corsOptions = {
+    origin: '*', 
+    methods: ['GET', 'POST'], 
+    allowedHeaders: ['Content-Type', 'Authorization']
+};
+app.use(cors(corsOptions));
+
 
 const bot = new Telegraf(process.env.BOT_TOKEN, {
     telegram: { webhookReply: true },
